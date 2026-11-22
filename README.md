@@ -83,13 +83,17 @@ test (`NfrAcceptanceTest`). See `maven/README.md`.
 3. **Install JMeter** — download `apache-jmeter-5.6.3.zip` from
    <https://jmeter.apache.org/download_jmeter.cgi>, extract to e.g. `C:\Java\apache-jmeter-5.6.3`.
    
+4. **Configure system environment variables** — Set `JAVA_HOME`, `MAVEN_HOME` and `JMETER_HOME` matching your local installation paths. Add `%JAVA_HOME%\bin`, `%MAVEN_HOME%\bin` and `%JMETER_HOME%\bin` to the system `PATH`.
+
+   
 ## 5. Running the test
 
 ### Recommended: one command, non-GUI
 
 ```powershell
-# from the repository root
-.\scripts\run_test.bat
+# under scripts from the repository root
+cd scripts
+.\run_test.bat
 ```
 
 What this script does:
