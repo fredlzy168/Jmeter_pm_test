@@ -26,12 +26,12 @@ All test executions follow requirements and run in **non-GUI mode (`jmeter -n`)*
 ├── testdata/
 │   └── category_ids.csv                      <- test data: 10 Category IDs
 └── results/
+    ├──run_20261123_092139/                  <- new test sample,the file list as below test result.
     └──run_20261122_122203/                  <- run case1: assignment default profile (PASS)
         ├── results.jtl                       <- raw data (committed as required evidence)
         ├── category_promotions.csv           <- assignment CSV deliverable
         ├── nfr_summary.txt                   <- NFR validation output
-        ├── jmeter.log
-        └── html-report/                      <- JMeter HTML dashboard
+        └── html-report/                      <- the content has been removed in pushing period
 
 ```
 
@@ -50,7 +50,7 @@ All test executions follow requirements and run in **non-GUI mode (`jmeter -n`)*
 | NFR-03 | 10 API calls in total for the 1-minute steady state | CSV unique IDs + Constant Throughput Timer + finite loops | JUnit validator asserts total calls = 10 |
 | NFR-04 | 90 % of calls within 500 ms | Nearest-rank P90 from raw elapsed metrics | JUnit validator asserts `p90 <= 500 ms` (HTML dashboard cross-check) |
 | R-5 | Configurable ramp-up, steady state, throughput and VUser count | JMeter `-J` runtime properties | Parameter overrides validated end-to-end in Run 2|
-| R-6 | Non-GUI execution | JMeter `-n` non-GUI mode | Evidence: console logs and `jmeter.log` |
+| R-6 | Non-GUI execution | JMeter `-n` non-GUI mode | Evidence: console logs |
 
 Implementation note:
 Functional API assertions (HTTP status check, CategoryId matching, CanRelist check and promotion CSV export) are implemented within JMeter using Groovy JSR223 script components as required.
@@ -168,7 +168,6 @@ You may open `.jmx` file inside JMeter GUI for debugging, temporarily add `View 
 | `results.jtl` | Raw per-call CSV log (committed evidence): timestamp, elapsed, latency, connect, thread, URL, success, failure message |
 | `category_promotions.csv` | The assignment CSV deliverable (section 7) |
 | `nfr_summary.txt` | Human-readable NFR validation summary with PASS/FAIL per gate |
-| `jmeter.log` | JMeter engine log |
 | `html-report/index.html` | JMeter HTML dashboard (statistics, response-time percentiles, throughput over time) |
 
 ## 7. The CSV deliverable
@@ -228,7 +227,7 @@ Maven project compiled for Java-17. Older JDK versions may cause compile or runt
 > Re-running `run_test.bat` on your machine regenerates every number in this
 > section from your own environment; `results/<your-run>/` then holds your raw data.
 > Raw test-run evidence files for the reference execution are committed within this repository under `results/run_20261122_122203/`.
-> This includes raw JMeter output `results.jtl`, generated `category_promotions.csv`, `jmeter.log` and NFR summary text file.
+> This includes raw JMeter output `results.jtl`, generated `category_promotions.csv`, and NFR summary text file.
 > All tables and observations inside this report are derived from these committed raw artifacts.
 > The JMeter HTML dashboard report can be regenerated locally from `results.jtl`. 
 > The generated html-report folder is NOT committed to source control to avoid storing large static web assets.
