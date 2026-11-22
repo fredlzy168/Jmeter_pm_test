@@ -230,16 +230,15 @@ Maven project compiled for Java-17. Older JDK versions may cause compile or runt
 > Raw test-run evidence files for the reference execution are committed within this repository under `results/run_20261122_122203/`.
 > This includes raw JMeter output `results.jtl`, generated `category_promotions.csv`, `jmeter.log` and NFR summary text file.
 > All tables and observations inside this report are derived from these committed raw artifacts.
-> The JMeter HTML dashboard report can be regenerated locally from `results.jtl`. The generated html-report folder is NOT committed to source control to avoid storing large static web assets.
+> The JMeter HTML dashboard report can be regenerated locally from `results.jtl`. 
+> The generated html-report folder is NOT committed to source control to avoid storing large static web assets.
 
 ### 10.1 Purpose
 
-Verify that the Trade Me sandbox *Categories Details* endpoint behaves
-functionally as specified (status, Category ID echo, `CanRelist` flag, promotion
-data extraction) and meets the four non-functional requirements (VUser count,
-ramp-up shape, call volume in the steady state, P90 latency), while producing
-the required CSV extract — using a repeatable, fully parameterised, non-GUI
-JMeter + PowerShell harness.
+Verify that the Trade Me sandbox *Categories Details* endpoint behaves functionally as specified 
+(status, Category ID echo, `CanRelist` flag, promotion data extraction) and meets the four non-functional requirements 
+(VUser count,ramp-up shape, call volume in the steady state, P90 latency), while producing
+the required CSV extract — using a repeatable, fully parameterised, non-GUI JMeter + JUnit validation harness.
 
 ### 10.2 Executions
 
