@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="TradeMe Category Details - Performance Test" enabled="true">
+      <stringProp name="TestPlan.comments">Performance test for the Trade Me sandbox Categories Details API.
+
+Requirement traceability (see README.md):
+NFR-01 - VUsers (threads) equal half the number of Category IDs in testdata/category_ids.csv
+NFR-02 - Ramp-up at one VUser per second
+NFR-03 - Exactly 10 API calls in total across the 1-minute steady state
+NFR-04 - 90th percentile response time at most 500 ms
+
+All execution parameters are overridable through JMeter properties:
+  -Jthreads=5          VUser count              (default 5)
+  -Jrampup=5           ramp-up seconds          (default 5 = 1 VUser per second)
+  -Jsteady_state=60    steady state seconds     (default 60)
+  -Jthroughput=10      total calls per minute   (default 10)
+  -Jprotocol / -Jhost / -Jport / -JoutputDir / -JtestDataPath
+
+Design note (NFR-03): the CSV Data Set consumes one Category ID per API call with
+recycling disabled, and an IfController guard skips any iteration once the data
+set is exhausted. The loop count is finite by design: an always-false
+</stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="protocol" elementType="Argument">
+            <stringProp name="Argument.name">protocol</stringProp>
+            <stringProp name="Argument.value">${__P(protocol,https)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="host" elementType="Argument">
+            <stringProp name="Argument.name">host</stringProp>
+            <stringProp name="Argument.value">${__P(host,api.tmsandbox.co.nz)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="port" elementType="Argument">
+            <stringProp name="Argument.name">port</stringProp>
+            <stringProp name="Argument.value">${__P(port,)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="outputDir" elementType="Argument">
+            <stringProp name="Argument.name">outputDir</stringProp>
+            <stringProp name="Argument.value">${__P(outputDir,./results)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+      <stringProp name="TestPlan.user_define_classpath"></stringProp>
+    </TestPlan>
+    <hashTree>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults" enabled="true">
+        <stringProp name="HTTPSampler.domain">${host}</stringProp>
+        <stringProp name="HTTPSampler.port">${port}</stringProp>
+        <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
+        <stringProp name="HTTPSampler.connect_timeout">10000</stringProp>
+        <stringProp name="HTTPSampler.response_timeout">30000</stringProp>
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+          <collectionProp name="Arguments.arguments"/>
+        </elementProp>
+      </ConfigTestElement>
+      <hashTree/>
+      <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Category IDs (Test Data)" enabled="true">
+        <stringProp name="filename">${__P(testDataPath,./testdata)}/category_ids.csv</stringProp>
+        <stringProp name="fileEncoding">UTF-8</stringProp>
+        <stringProp name="variableNames">categoryId</stringProp>
+        <boolProp name="ignoreFirstLine">true</boolProp>
+        <stringProp name="delimiter">,</stringProp>
+        <boolProp name="quotedData">false</boolProp>
+        <boolProp name="recycle">false</boolProp>
+        <boolProp name="stopThread">false</boolProp>
+        <stringProp name="shareMode">shareMode.all</stringProp>
+      </CSVDataSet>
+      <hashTree/>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Category Details Load (NFR-01 and NFR-02)" enabled="true">
+        <stringProp name="ThreadGroup.on_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">${__P(loops,2)}</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${__P(threads,5)}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${__P(rampup,5)}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.duration">${__P(steady_state,60)}</stringProp>
+        <stringProp name="ThreadGroup.delay">0</stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <ConstantThroughputTimer guiclass="TestBeanGUI" testclass="ConstantThroughputTimer" testname="Throughput Pacing (NFR-03)" enabled="true">
+          <intProp name="calcMode">1</intProp>
+          <stringProp name="throughput">${__P(throughput,10)}</stringProp>
+        </ConstantThroughputTimer>
+        <hashTree/>
+        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="Guard - stop when test data exhausted" enabled="true">
+          <stringProp name="IfController.condition">${__jexl3("${categoryId}" != "&lt;EOF&gt;")}</stringProp>
+          <boolProp name="IfController.useExpression">true</boolProp>
+          <boolProp name="IfController.evaluateAll">false</boolProp>
+        </IfController>
+        <hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET Category Details" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="catalogue" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">false</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                  <stringProp name="Argument.name">catalogue</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/v1/Categories/${categoryId}/Details.json</stringProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Headers" enabled="true">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="" elementType="Header">
+                  <stringProp name="Header.name">Accept</stringProp>
+                  <stringProp name="Header.value">application/json</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Header">
+                  <stringProp name="Header.name">User-Agent</stringProp>
+                  <stringProp name="Header.value">JMeter-PerformanceTest/1.0</stringProp>
+                </elementProp>
+              </collectionProp>
+            </HeaderManager>
+            <hashTree/>
+            <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="Functional Assertions - status, CategoryId, CanRelist (Groovy)" enabled="true">
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="script"><![CDATA[
+import groovy.json.JsonSlurper
+
+// Functional validation for one API response (assignment Functional Requirements).
+// Bound variables provided by JMeter:
+//   SampleResult     - the sampler result for this API call
+//   AssertionResult  - this assertion, used to report failures
+//   vars             - JMeter variables; 'categoryId' comes from the CSV Data Set
+//   log              - JMeter logger
+
+def sample = SampleResult
+def assertion = AssertionResult
+def requestedCategoryId = vars.get('categoryId')
+
+// The CSV Data Set writes the literal string '<EOF>' into the variables once the
+// test data is exhausted (recycling is disabled). Nothing to validate then.
+if (requestedCategoryId == null || requestedCategoryId == '<EOF>') {
+    return
+}
+
+// ---- Check 1: response status must be HTTP 200 ------------------------------
+def statusCode = sample.getResponseCode()
+if (!'200'.equals(statusCode)) {
+    assertion.setFailure(true)
+    assertion.setFailureMessage('Response status check failed - expected HTTP 200 but received ' +
+            statusCode + ' for CategoryId=' + requestedCategoryId)
+    return
+}
+
+// ---- Parse the response body as JSON ----------------------------------------
+def body = sample.getResponseDataAsString()
+def json
+try {
+    json = new JsonSlurper().parseText(body)
+} catch (Exception parseError) {
+    assertion.setFailure(true)
+    assertion.setFailureMessage('Response body is not valid JSON for CategoryId=' +
+            requestedCategoryId + ' - ' + parseError.getMessage())
+    return
+}
+
+// ---- Check 2: parameter check - returned CategoryId must match the request ---
+def returnedCategoryId = (json.CategoryId == null) ? '' : String.valueOf(json.CategoryId)
+if (!requestedCategoryId.equals(returnedCategoryId)) {
+    assertion.setFailure(true)
+    assertion.setFailureMessage('CategoryId parameter check failed - expected ' +
+            requestedCategoryId + ' but the API returned ' + returnedCategoryId)
+    return
+}
+
+// ---- Check 3: text check - CanRelist must be true ----------------------------
+// Note: on the live sandbox, Category 6331 currently returns CanRelist=false.
+// This call is intentionally marked as failed - it is a data finding that is
+// documented in README.md and in the performance test report.
+if (!Boolean.TRUE.equals(json.CanRelist)) {
+    assertion.setFailure(true)
+    assertion.setFailureMessage('CanRelist text check failed - expected [true] but was [' +
+            json.CanRelist + '] for CategoryId=' + requestedCategoryId)
+}
+]]></stringProp>
+              <stringProp name="scriptLanguage">groovy</stringProp>
+            </JSR223Assertion>
+            <hashTree/>
+            <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="CSV Writer - CategoryId, Name, Path, PromotionId, Price (Groovy)" enabled="true">
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="script"><![CDATA[
+import groovy.json.JsonSlurper
+
+// Writes the assignment CSV deliverable: one row per Promotion.
+// Columns: CategoryId, Name, Path, PromotionId, Price
+// Category-level fields (Name, Path) are repeated on every promotion row so the
+// file stays self-contained when it is sorted or filtered.
+// Bound variables provided by JMeter: prev (the SampleResult), vars, props, log.
+
+def sample = prev
+if (sample == null || !'200'.equals(sample.getResponseCode())) {
+    return // only successful HTTP responses contribute rows
+}
+
+def requestedCategoryId = vars.get('categoryId')
+if (requestedCategoryId == null || requestedCategoryId == '<EOF>') {
+    return
+}
+
+def json
+try {
+    json = new JsonSlurper().parseText(sample.getResponseDataAsString())
+} catch (Exception parseError) {
+    log.warn('CSV writer - response body was not valid JSON for CategoryId=' + requestedCategoryId)
+    return
+}
+
+// Minimal RFC 4180 quoting for fields that may contain commas or quotes.
+def csvEscape = { value ->
+    def s = (value == null) ? '' : String.valueOf(value)
+    if (s.indexOf(',') >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0 || s.indexOf('\r') >= 0) {
+        s = '"' + s.replace('"', '""') + '"'
+    }
+    return s
+}
+
+def categoryName = csvEscape(json.Name)
+def categoryPath = csvEscape(json.Path)
+
+def rows = new StringBuilder()
+def promotions = json.Promotions
+if (promotions == null || promotions.isEmpty()) {
+    rows.append(csvEscape(requestedCategoryId)).append(',').append(categoryName).append(',').append(categoryPath)
+            .append(',').append(',').append(System.lineSeparator())
+} else {
+    promotions.each { promotion ->
+        rows.append(csvEscape(requestedCategoryId)).append(',').append(categoryName).append(',').append(categoryPath)
+                .append(',').append(csvEscape(promotion.Id)).append(',').append(csvEscape(promotion.Price))
+                .append(System.lineSeparator())
+    }
+}
+
+def outputDir = new File(vars.get('outputDir'))
+if (!outputDir.exists()) {
+    outputDir.mkdirs()
+}
+def csvFile = new File(outputDir, 'category_promotions.csv')
+
+// Serialise file writes across VUsers with a lock shared through JMeter properties.
+def lock = props.get('csv.writer.lock')
+if (lock == null) {
+    lock = new Object()
+    props.put('csv.writer.lock', lock)
+}
+synchronized (lock) {
+    if (!csvFile.exists()) {
+        csvFile.setText('CategoryId,Name,Path,PromotionId,Price' + System.lineSeparator(), 'UTF-8')
+    }
+    csvFile.append(rows.toString(), 'UTF-8')
+}
+]]></stringProp>
+              <stringProp name="scriptLanguage">groovy</stringProp>
+            </JSR223PostProcessor>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
