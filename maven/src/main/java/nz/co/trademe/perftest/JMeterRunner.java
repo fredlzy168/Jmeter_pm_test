@@ -20,8 +20,7 @@ import java.util.Locale;
 
 /**
  * Runs the Trade Me Category Details performance test through the <em>embedded</em>
- * JMeter engine - the Java replacement for the {@code jmeter -n -t ... -l ...} invocation
- * in {@code scripts/run-test.ps1}.
+ * JMeter engine 
  *
  * <p>The test plan ({@code /testplan/TradeMe_CategoryDetails_PerfTest.jmx}) is loaded
  * verbatim from the classpath, so the Maven build and the CLI produce identical results.
@@ -45,7 +44,7 @@ public final class JMeterRunner {
 
     /** Runs the test once. Blocks until the JMeter engine has finished. */
     public RunOutput run(TestConfig config) throws IOException {
-        // 1. Timestamped run directory (same naming scheme as run-test.ps1).
+        // 1. Timestamped run directory.
         String stamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String label = config.runLabel() == null ? "" : config.runLabel().trim().replace(' ', '-');
         Path outputRoot = Path.of(config.outputRoot()).toAbsolutePath();
@@ -81,7 +80,7 @@ public final class JMeterRunner {
         JMeterUtils.setLocale(Locale.ENGLISH);
         JMeterUtils.initLocale();
 
-        // 4. Push the execution parameters (equivalent of the -J CLI flags in run-test.ps1).
+        // 4. Push the execution parameters.
         JMeterUtils.setProperty("protocol", config.protocol());
         JMeterUtils.setProperty("host", config.host());
         if (!config.port().isBlank()) {

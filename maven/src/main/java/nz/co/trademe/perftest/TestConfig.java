@@ -10,23 +10,14 @@ import java.util.Properties;
 /**
  * Immutable configuration for the Trade Me Category Details performance test.
  *
- * <p>Java port of the parameter handling in {@code scripts/run-test.ps1}. Every
- * setting is resolved with this precedence (highest wins):
+ * <p>Java port of the parameter handling .
+ *  Every setting is resolved with this precedence (highest wins):
  * <ol>
  *   <li>JVM system property, e.g. {@code mvn test -Dtrademe.threads=10}</li>
  *   <li>Environment variable, e.g. {@code TRADEME_THREADS=10}</li>
  *   <li>the bundled {@code /test.properties} classpath resource</li>
  *   <li>the built-in default (identical to the PowerShell defaults)</li>
  * </ol>
- *
- * <p>The derived run profile mirrors {@code run-test.ps1} exactly:
- * <ul>
- *   <li>NFR-01: {@code threads = ceil(CategoryIdCount / 2)}</li>
- *   <li>NFR-02: {@code rampUp = ceil(threads / vUsersPerSecond)}</li>
- *   <li>NFR-03: {@code throughputPerMinute = CategoryIdCount}</li>
- *   <li>{@code loops = ceil(CategoryIdCount / threads) + 1} so every Category ID is
- *       called exactly once and the buffer loop is skipped by the EOF guard.</li>
- * </ul>
  */
 public final class TestConfig {
 
@@ -77,7 +68,7 @@ public final class TestConfig {
         b.p90ThresholdMs = resolveInt("trademe.p90ThresholdMs", bundled, 500);
         b.jmeterHome = resolveJMeterHome(bundled);
         b.htmlReport = Boolean.parseBoolean(resolve("trademe.htmlReport", bundled, "true"));
-        b.outputRoot = resolve("trademe.outputRoot", bundled, "target/results");
+        b.outputRoot = resolve("trademe.outputRoot", bundled, "../results");
         b.runLabel = resolve("trademe.runLabel", bundled, "");
         b.categoryIds = readCategoryIds();
         return new TestConfig(b);
@@ -285,7 +276,7 @@ public final class TestConfig {
         private int p90ThresholdMs = 500;
         private String jmeterHome = "";
         private boolean htmlReport = true;
-        private String outputRoot = "target/results";
+        private String outputRoot = "../results";
         private String runLabel = "";
         private List<String> categoryIds = List.of();
 

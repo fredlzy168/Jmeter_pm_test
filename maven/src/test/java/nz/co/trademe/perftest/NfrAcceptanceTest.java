@@ -15,26 +15,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Full end-to-end acceptance suite - the JUnit replacement of
- * {@code scripts/run-test.ps1} + {@code scripts/validate-nfr.ps1}:
+ * Full end-to-end acceptance suite 
  *
- * <ol>
- *   <li>{@link #runLoadTestOnce()} executes the unchanged JMeter test plan through the
- *       embedded JMeter 5.6.3 engine with the derived assignment profile
- *       (5 VUsers, 5 s ramp-up, 60 s steady state, 10 calls/min).</li>
- *   <li>Every non-functional requirement, the functional assertions and the CSV
- *       deliverable are then asserted as individual JUnit tests.</li>
- * </ol>
- *
- * <p>The suite is tagged {@code load} because it drives real traffic against the sandbox
- * and takes about 70 seconds. The results (results.jtl, category_promotions.csv,
- * nfr_summary.txt and - when a JMeter installation is configured - the HTML dashboard)
- * are written to {@code target/results/run_<timestamp>[_<label>]/}.
  *
  * <p>Run it with:
  * <pre>
- *   mvn test -Djunit.groups=load -Djunit.excludedGroups=     # only this suite
- *   mvn test -Djunit.excludedGroups=                         # full build incl. this suite
+ *   mvn test "-Djunit.groups=load" "-Djunit.excludedGroups="     # only this suite
+ *   mvn test "-Djunit.excludedGroups="                         # full build incl. this suite
  * </pre>
  */
 @Tag("load")

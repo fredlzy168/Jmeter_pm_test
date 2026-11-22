@@ -45,12 +45,12 @@ All test executions follow requirements and run in **non-GUI mode (`jmeter -n`)*
 | FR-3b | Parameter check: Category ID | `Functional Assertions` JSR223 (Groovy) — Check 2 | Returned `CategoryId` must equal the requested ID |
 | FR-3c | Text check: `"CanRelist": true` | `Functional Assertions` JSR223 (Groovy) — Check 3 | Sample marked failed when `CanRelist` is not `true` |
 | FR-4 | CSV output: Category ID, Name, Path, Promotion ID, Price — **all** promotions per category | `CSV Writer` JSR223 PostProcessor (Groovy) | `category_promotions.csv`, one row per promotion |
-| NFR-01 | VUsers = half the Category ID count | `run_test.ps1` derives `threads = ceil(10 / 2) = 5`; thread group uses `-Jthreads` | `validate-nfr.ps1` compares distinct VUsers in `results.jtl` vs expected |
-| NFR-02 | Ramp-up at one VUser per second | `run_test.ps1` derives `rampup = threads × 1 s = 5`; thread group ramp-time | First-sample timestamps of all VUsers spread within the ramp window |
-| NFR-03 | 10 API calls in total for the 1-minute steady state | CSV data cap (one call per ID, no recycling) + `Constant Throughput Timer` (10 calls/min shared) + finite loops | `validate-nfr.ps1` asserts `total calls == 10` |
-| NFR-04 | 90 % of calls within 500 ms | Nearest-rank P90 over `elapsed` | `validate-nfr.ps1` asserts `p90 <= 500 ms` (also visible in the HTML dashboard) |
-| R-5 | Parameters allow changing ramp-up, steady state, throughput, VUser count | `-Threads -RampUpSeconds -SteadyStateSeconds -ThroughputPerMinute` (PowerShell) → `-Jthreads -Jrampup -Jsteady_state -Jthroughput` (JMeter) | Run 2 in section 9.2 used overrides end-to-end |
-| R-6 | Non-GUI execution | `run_test.bat`` invokes `jmeter -n -t … -l … -e -o …` | Console + `jmeter.log` |
+| NFR-01 | VUsers = half the Category ID count | Thread count `ceil(10/2)=5` supplied to JMeter via `-Jthreads` | JUnit validator checks distinct VUsers in `results.jtl` |
+| NFR-02 | Ramp-up at one VUser per second | Rampup = threads × 1s, passed to JMeter with `-Jrampup` | First sample timestamps fall within ramp window |
+| NFR-03 | 10 API calls in total for the 1-minute steady state | CSV unique IDs + Constant Throughput Timer + finite loops | JUnit validator asserts total calls = 10 |
+| NFR-04 | 90 % of calls within 500 ms | Nearest-rank P90 from raw elapsed metrics | JUnit validator asserts `p90 <= 500 ms` (HTML dashboard cross-check) |
+| R-5 | Configurable ramp-up, steady state, throughput and VUser count | JMeter `-J` runtime properties | Parameter overrides validated end-to-end in Run 2 |
+| R-6 | Non-GUI execution | JMeter `-n` non-GUI mode | Evidence: console logs and `jmeter.log` |
 
 Implementation note:
 Functional API assertions (HTTP status check, CategoryId matching, CanRelist check and promotion CSV export) are implemented within JMeter using Groovy JSR223 script components as required.
@@ -274,36 +274,34 @@ JMeter + PowerShell harness.
 | 26.87 | 1-4 | 6334 | 0 | 159 | pass |
 | 33.87 | 1-5 | 6336 | 0 | 157 | pass |
 
-Charts: `docs/assets/chart-1-response-times.png`, `docs/assets/chart-2-call-schedule.png`.
 
 ### 10.5 Observations and commentary
 
-1. **Category 6331 legitimately returns `CanRelist: false`.** All ten Category
-   IDs answer HTTP 200 with a well-formed payload and echo the requested
+1. **Category 6331 legitimately returns `CanRelist: false`.** 
+   All ten Category IDs answer HTTP 200 with a well-formed payload and echo the requested
    `CategoryId`; 6331 (*Automotive & aviation*) is the only one whose
    `CanRelist` is `false`, and it also exposes an empty `Promotions` array (it
    is a magazine category, not relistable). The assignment assertion is
    implemented as specified and correctly marks this sample failed — a useful
    demonstration that the assertion works, and a genuine data observation about
    the sandbox.
-2. **Connection reuse pays off.** The first call of each VUser carries the TLS
-   handshake (+246 ms to +308 ms of connect time in the recorded runs); every
-   subsequent call reuses the keep-alive connection (`Connect = 0`) and settles
-   around 155–185 ms. Under longer steady states this is what keeps P90 low.
-3. **Throughput pacing shape.** The Constant Throughput Timer lets the ramp-up
-   burst through the first wave (one call per starting VUser), then spaces the
-   second wave to hold the 10 calls/min global rate; combined with the
+2. **Connection reuse pays off.** 
+   The first call of each VUser carries the TLS handshake (+246 ms to +308 ms of
+   connect time in the recorded runs); every subsequent call reuses the keep-alive 
+   connection (`Connect = 0`) and settles around 155–185 ms. Under longer steady states this is what keeps P90 low.
+3. **Throughput pacing shape.** 
+   The Constant Throughput Timer lets the ramp-up burst through the first wave (one call per starting VUser), 
+   then spaces the second wave to hold the 10 calls/min global rate; combined with the
    data-driven cap the run performs **exactly 10 calls** and finishes at +34 s,
    comfortably inside the 60-second steady state.
-4. **The validator catches under-provisioned profiles (tuning observation).**
-   With `-Threads 10 -ThroughputPerMinute 10`, the shared throughput timer
-   queues late-starting VUsers' first calls behind the first five VUsers'
-   second-wave slots; the data set is exhausted before VUsers 6–10 ever fire.
-   The run still made exactly 10 calls, but only 5 distinct VUsers executed —
-   and `validate-nfr.ps1` failed the NFR-01 gate with
-   `threads=5, expected=10`. Guidance: when increasing `-Threads`, raise
-   `-ThroughputPerMinute` (and/or add IDs to the data set) so every VUser can
-   complete a call inside the window.
+4. **The validator catches under‑provisioned profiles (tuning observation).**
+   When configured with `-Jthreads=10 -JtargetThroughput=10`, the shared Constant Throughput Timer schedules requests sequentially. 
+   The first five virtual users consume all available test data in their second iteration slots, 
+   exhausting the CSV dataset before VUsers 6–10 can send any requests.
+   The test still produced exactly 10 calls, but only 5 distinct virtual users executed. 
+   The JUnit validator fails the NFR-01 check, as the observed active VUser count does not match the configured 10.
+   Guidance: When increasing `-Jthreads`, also raise `-JtargetThroughput` or extend the category ID dataset, 
+   to ensure every virtual user can complete at least one request within the steady‑state window.
 5. **Small-sample statistics.** Ten calls are a functional-scale sample: P90 is
    effectively "the second-slowest call". The numbers therefore demonstrate
    requirement compliance rather than production capacity. For capacity

@@ -9,10 +9,9 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Unit tests for the run-profile derivation rules - the Java port of section 1 of
- * {@code scripts/run-test.ps1} (NFR-01 / NFR-02 / NFR-03 defaults and the loop buffer).
+ * Unit tests for the run-profile derivation rules - (NFR-01 / NFR-02 / NFR-03 defaults and the loop buffer).
  */
-@DisplayName("Derived run profile (port of run-test.ps1 derivation)")
+@DisplayName("Derived run profile")
 class DerivedProfileTest {
 
     private static final List<String> TEN_IDS = IntStream.rangeClosed(6327, 6336)
