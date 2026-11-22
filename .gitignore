@@ -1,0 +1,11 @@
+results/*/html-report/
+results/run_*_local*/
+.idea/
+.git
+*.iml
+target/
+.DS_Store
+Thumbs.db
+maven/target/
+maven/.settings/
+maven/report-output/
