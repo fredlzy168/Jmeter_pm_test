@@ -49,7 +49,7 @@ All test executions follow requirements and run in **non-GUI mode (`jmeter -n`)*
 | NFR-02 | Ramp-up at one VUser per second | Rampup = threads × 1s, passed to JMeter with `-Jrampup` | First sample timestamps fall within ramp window |
 | NFR-03 | 10 API calls in total for the 1-minute steady state | CSV unique IDs + Constant Throughput Timer + finite loops | JUnit validator asserts total calls = 10 |
 | NFR-04 | 90 % of calls within 500 ms | Nearest-rank P90 from raw elapsed metrics | JUnit validator asserts `p90 <= 500 ms` (HTML dashboard cross-check) |
-| R-5 | Configurable ramp-up, steady state, throughput and VUser count | JMeter `-J` runtime properties | Parameter overrides validated end-to-end in Run 2 |
+| R-5 | Configurable ramp-up, steady state, throughput and VUser count | JMeter `-J` runtime properties | Parameter overrides validated end-to-end in Run 2|
 | R-6 | Non-GUI execution | JMeter `-n` non-GUI mode | Evidence: console logs and `jmeter.log` |
 
 Implementation note:
@@ -77,7 +77,7 @@ test (`NfrAcceptanceTest`). See `maven/README.md`.
    ```powershell
    java -version
    ```
-2. **Install Apache Maven** — download `apache-Maven-5.9.9.zip` from
+2. **Install Apache Maven** — download `apache-Maven-3.9.9.zip` from
    <https://archive.apache.org/dist/maven/maven-3/>, extract to e.g. `C:\Apps\apache-maven-3.9.9`.
    
 3. **Install JMeter** — download `apache-jmeter-5.6.3.zip` from
@@ -245,6 +245,8 @@ the required CSV extract — using a repeatable, fully parameterised, non-GUI JM
 | Run | Profile | Configured / executed VUsers | Calls | Failures | P50 (ms) | P90 (ms) | P95 (ms) | Max (ms) | Active window | Verdict |
 |-----|---------|------------------------------|-------|----------|----------|----------|----------|----------|---------------|---------|
 | `run_20261122_122203` | Assignment defaults (auto-derived) | 5 / 5 | 10 | 1 (known 6331 finding) | 160 | **391** | 452 | 452 | 34.0 s | **PASS** |
+| `run_20261123_092139` | final Test(auto-derived) | 5 / 5 | 10 | 1 (known 6331 finding) | 162.5 | **216** | 395 | 395 | 33.56 s | **PASS** |
+
 
 ### 10.3 NFR compliance (default run)
 
@@ -253,7 +255,7 @@ the required CSV extract — using a repeatable, fully parameterised, non-GUI JM
 | NFR-01 | 5 VUsers (half of 10 IDs) | 5 distinct VUsers in `results.jtl`, max concurrent 5 | PASS |
 | NFR-02 | 1 VUser per second | First sample timestamps at +0.00 s, +0.89 s, +1.88 s, +2.89 s, +3.89 s (spread 3.89 s ≈ configured 5s ramp-up window) | PASS |
 | NFR-03 | 10 calls in the 1-minute steady state | Exactly 10 samples collected; last request completes at +33.88s, well inside the 60-second steady‑state window | PASS |
-| NFR-04 | P90 ≤ 500 ms | P90 = 284ms (nearest rank percentile calculation, n=10 from raw `elapsed` values in results.jtl) | PASS |
+| NFR-04 | P90 ≤ 500 ms | P90 = 391ms (nearest rank percentile calculation, n=10 from raw `elapsed` values in results.jtl) | PASS |
 | FR assertions | status 200 / CategoryId / CanRelist | 10/10 HTTP-200 status checks passed, 10/10 CategoryId parameter checks passed, 9/10 CanRelist checks passed (6331 known sandbox API data finding) | PASS (with documented finding) |
 | CSV deliverable | all promotions per category | 37 data rows generated, covering all 10 input Category IDs | PASS |
 
@@ -285,9 +287,9 @@ the required CSV extract — using a repeatable, fully parameterised, non-GUI JM
    demonstration that the assertion works, and a genuine data observation about
    the sandbox.
 2. **Connection reuse pays off.** 
-   The first call of each VUser carries the TLS handshake (+246 ms to +308 ms of
+   The first call of each VUser carries the TLS handshake (+18 ms to +298 ms of
    connect time in the recorded runs); every subsequent call reuses the keep-alive 
-   connection (`Connect = 0`) and settles around 155–185 ms. Under longer steady states this is what keeps P90 low.
+   connection (`Connect = 0`) and settles around 157–160 ms. Under longer steady states this is what keeps P90 low.
 3. **Throughput pacing shape.** 
    The Constant Throughput Timer lets the ramp-up burst through the first wave (one call per starting VUser), 
    then spaces the second wave to hold the 10 calls/min global rate; combined with the
@@ -315,13 +317,14 @@ the required CSV extract — using a repeatable, fully parameterised, non-GUI JM
 ### 10.6 Reproducing / replacing the numbers
 
 ```powershell
-.\scripts\run_test.bat          # default profile
+cd script
+.\run_test.bat          # the work directory must be script, otherwise it could not switch to maven project to run the task.
 ```
 
 Then compare `results/<new-run>/nfr_summary.txt` with section 10.3 — every gate
 re-evaluates automatically from your own `results.jtl`.
 
-### 9.7 Scaling suggestions (future work)
+### 10.7 Scaling suggestions (future work)
 - Duplicate or extend `testdata/category_ids.csv` (e.g. 100+ IDs) and raise
   `-ThroughputPerMinute` for sustained load runs; add `-Jloops` headroom.
 - Add a second thread group with a think time profile to model browsing

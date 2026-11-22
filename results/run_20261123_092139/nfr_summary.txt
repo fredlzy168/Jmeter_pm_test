@@ -1,0 +1,22 @@
+==============================================================
+ Trade Me Category Details - NFR Validation Summary
+ Generated          : 2026-11-23 09:22:18
+ Results file       : C:\Fred\Test\TradeMe-Performance-Test-Submission\Jmeter_pm_test\maven\..\results\run_20261123_092139\results.jtl
+--------------------------------------------------------------
+ Configured profile : 5 VUsers, ramp-up 5 s (1 VUser/s), steady state 60 s, 10 calls/min total
+ Total API calls    : 10
+ Observed profile   : 17.8 calls/min over the active window
+ Response time (ms) : min 88 / mean 175 / p50 142 / p90 216 / p95 395 / p99 395 / max 395
+ VUsers observed    : 5 distinct, max concurrent 5
+ Ramp-up spread     : 3.6 s
+--------------------------------------------------------------
+[PASS] Response status + CategoryId parameter assertions - status failures=0, parameter failures=0, other failures=0
+[WARN] CanRelist=true text check - 1 of 10 responses reported CanRelist=false (CategoryId: 6331) - expected live data finding, see README.md
+[PASS] NFR-01 VUsers = half the Category ID count - threads=5, expected=5
+[PASS] NFR-02 Ramp-up at one VUser per second - first-sample spread=3.6 s, configured=5 s, tolerance=7.0 s
+[PASS] NFR-03 API calls within the 1-minute steady state - calls=10, expected=10
+[PASS] NFR-04 90th percentile response time at most 500 ms - p90=216 ms
+[PASS] CSV deliverable category_promotions.csv - rows=37, successful calls=9
+--------------------------------------------------------------
+ OVERALL: PASS (CanRelist findings reported above)
+==============================================================
